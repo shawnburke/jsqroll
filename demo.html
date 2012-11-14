@@ -1,0 +1,149 @@
+<html>
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+<script src="http://underscorejs.org/underscore-min.js"></script>
+<link href="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/css/bootstrap-combined.min.css" rel="stylesheet">
+<script src="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/js/bootstrap.min.js"></script>
+<script type='text/javascript' src='jsqroll.js'></script>
+<style>
+	.scroller {
+		height: 600px;
+		overflow-y: scroll;
+		width:100%;
+	}
+
+	.container-item {
+		float:left;
+		min-width:150px;
+		height: 150px;
+		text-align:center;
+		padding:5px;
+	}
+	.container-item .content-parent {
+		border:thin solid black;
+		background: rgba(0,0,0,.2);
+	}
+	.container-item h1 {
+		line-height: 120px;
+		color:rgba(0,0,0,.2);
+	}
+
+	.loaded {
+		color: rgba(255,0,0,.5);
+
+	}
+
+</style>
+
+<script id='item_container_template' type='text/html'>
+		<div class='container-item'>
+			<div class='content-parent'>
+				<h1><%=index%></h1>
+			</div>
+		</div>
+</script>
+
+<script id='item_template' type='text/html'>
+		<h1><div class='loaded'><%=index%></div></h1>
+</script>
+
+
+<script type='text/javascript'>
+	
+	window._data = [];
+
+	for (var i = 0; i <= 500; i++) {
+		window._data.push({
+			title: "Item " + i,
+			index:i
+		});
+	}
+
+
+	
+
+	$(function(){
+
+		var startIndex = 0;
+		if (window.location.hash) {
+			var i = Number(window.location.hash.substring(1));
+			if (!_.isNaN(i)) {
+				startIndex = i;
+			}
+		}
+
+		function l(start, end, setFunc){
+
+			_.defer(function(){
+
+				for (var i = start; i <= end; i++) {
+					var index = i;
+					setFunc(index, window._data[index]);
+					
+				}
+			});
+		}
+
+		var options = {
+			containerTemplateSelector: '#item_container_template',
+			itemTemplateSelector: '#item_template',
+			itemCount: _data.length,
+			loadCallback: l,
+			position: startIndex,
+			onOverscroll: function(start){
+				for (var i = start; i < start + 24; i++) {
+					window._data.push({index:i});
+				}
+				return window._data.length;
+			},
+			positionChanged: function(index) {
+				window.location.hash = index;
+			}
+		}
+		
+		$('.scroller').jSqroll(options);
+
+	
+	})
+	
+
+</script>
+
+
+</head>
+
+<body>
+<div class="navbar">
+  <div class="navbar-inner">
+    <a class="brand" href="#">JSqroll</a>
+    <ul class="nav">
+      <!--<li class="active"><a href="#">Home</a></li>
+      <li><a href="#">Link</a></li>
+      <li><a href="#">Link</a></li>-->
+    </ul>
+  </div>
+</div>
+<div class='container'>
+	<div class='row'>
+		<div class='span12'>
+			<h1>Description</h1>
+			<p>JSqroll is a flexible scrolling helper that allows for efficient and pagable scrolling through lots of data.  It supports AJAX in a natural way.</p>
+			<p>JSqroll depends on JQuery and Underscore (for templates).</p>
+		</div>
+	</div>
+
+	<div class='row'>
+		<div class='span12'>
+			<h1>Demo</h1>
+		</div>
+	</div>
+
+	<div class='row'>
+		<div class='span12'>
+			<div class='well scroller'></div>
+			
+		</div>
+	</div>
+</div>
+</body>
+</html>
