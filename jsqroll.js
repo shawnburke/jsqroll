@@ -143,7 +143,7 @@
 				var w = Math.floor(this.itemParent.width() / item.outerWidth());
 				
 				var top = (index / w) * item.outerHeight();
-				this.itemParent.scrollTop(top);
+				this.scrollParent.scrollTop(top);
 			}
 
 
@@ -195,7 +195,8 @@
 								if (data.options.position) {
 									data.scrollToIndex(data.options.position);
 								}
-								data.scrollParent.scroll(_.debounce(data.onScroll, data.options.loadDelay));
+								data.scrollFunc = _.debounce(data.onScroll, data.options.loadDelay);
+								data.scrollParent.scroll(data.scrollFunc);
 								data.onScroll();
 
 								$(window).resize(data.onScroll);
@@ -203,16 +204,30 @@
 							
 						});
 				},
+				destroy: function(){
+					return this.each(function(){
+						var $this = $(this);
+						var data = $(this).data('state');
+						if (!data) return;
+						
+						data.scrollParent.unbind('scroll', data.scrollFunc);
+						$(window).unbind('resize', data.scrollFunc);
+						$this.removeData('state');
+
+					})
+				},
 				itemCount: function(newCount) {
-					var data = $(this).data('state');
-					if (!data) return 0;
-					if (_.isUndefined(newCount)) {
-						return data.options.itemCount;
-					}
-					else {
-						data.options.itemCount = newCount;
-						data.ensureContainers(newCount, true);
-					}
+					return this.each(function() {
+						var data = $(this).data('state');
+						if (!data) return;
+						if (_.isUndefined(newCount)) {
+							return data.options.itemCount;
+						}
+						else {
+							data.options.itemCount = newCount;
+							data.ensureContainers(newCount, true);
+						}
+					});
 				}
 			}
 
