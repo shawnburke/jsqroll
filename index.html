@@ -1,0 +1,154 @@
+<html>
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+<script src="http://underscorejs.org/underscore-min.js"></script>
+<link href="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/css/bootstrap-combined.min.css" rel="stylesheet">
+<script src="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/js/bootstrap.min.js"></script>
+
+
+</head>
+
+<body>
+<div class="navbar">
+  <div class="navbar-inner">
+    <a class="brand" href="#">JSqroll</a>
+    <ul class="nav">
+      <li><a href="demo_el.html">Scrolling Element</a>
+       <li><a href="demo_page.html">Scrolling Page</a>
+    </ul>
+  </div>
+</div>
+<div class='container'>
+	<div class='row'>
+		<div class='span12'>
+			<h1>Description</h1>
+			<p>JSqroll is a flexible scrolling helper that allows for efficient and pagable scrolling through lots of data.  It supports AJAX in a natural way.</p>
+			<p>JSqroll depends on <a href='http://jquery.com'>JQuery</a> for DOM operations and <a href='http://underscorejs.org'>Underscore</a> (for templates).</p>
+
+			<p>JScroll supports:</p>
+			<ul>
+				<li>Incremental loading of element content</li>
+				<li>Easy integration with AJAX-sourced data</li>
+				<li>Element- or page-level scrolling</li>
+				<li>Template-based element definitions</li>
+			</ul>
+
+			<p>Check out <b><a href='http://github.com/shawnburke/jsqroll'>JSqroll on Github</a></b>.</p>
+		</div>
+	</div>
+
+	<div class='row'>
+		<div class='span12'>
+			<h1>Docs</h1>
+			
+			<h2>Intro</h2>
+			<p>JSqroll is designed to provide easy, paged loading of elements on a page using an AJAX callback.  It's different than the other infinite scroll plugins that use the JQuery load event to fault in HTML.  JSqroll is designed to give you more control of the process if you've got an AJAX endpoint to serve your data, but pre-loads elements rather than loading them as the user scrolls.  For small-to-medium (a few thousand) known-size data sets, this gives a better experience for users.</p>
+
+			<p></p>
+
+			<h2>Overview</h2>
+			<p>JSqroll uses Underscore templates for two things:</p>
+			<ol>
+				<li>The HTML template for the placeholder container element.</li>
+				<li>The HTML template for the created items.</li>
+			</ol>
+
+			<p>JSqroll then creates all of the containers up front.  This requires that all of the containers be the same size.  If you need different sized containers, JScqroll is not for you.</p>
+
+			<h2>Example</h2>
+
+			<p>Configuring JSqroll is easy.</p>
+			<p> With this HTML:</p>
+			<code>
+<pre>
+	&lt;-- The Container Template.  Default data items will have the field 'index' set. --&gt;
+	&lt;script id='item_container_template' type='text/html'&gt;
+			&lt;div class='container-item'&gt;
+				&lt;div class='content-parent'&gt;
+					&lt;h1&gt;&lt;%=index%&gt;&lt;/h1&gt;
+				&lt;/div&gt;
+			&lt;/div&gt;
+	&lt;/script&gt;
+
+	&lt;-- The Item Template.  Index field will be set if not supplied by the data  This content will be parented into the appropriate container under the 'contentParentSelector' element. --&gt;
+	
+	&lt;script id='item_template' type='text/html'&gt;
+			&lt;h1&gt;&lt;div class='loaded'&gt;&lt;%=index%&gt;&lt;/div&gt;&lt;/h1&gt;
+	&lt;/script&gt;
+
+
+	&lt;-- The element that will host the scrolled content. --&gt;
+	
+	&lt;div id='scroller' style='height:600px;overflow-y:scroll;width:100%'&gt;&lt;/div&gt;
+</pre>
+			</code>
+			<p>JSqroll setup is as follows, with code for updating start index from URL hash.</p>
+			<code>
+				<pre>
+
+// Check hash for a start index.
+var startIndex = 0;
+if (window.location.hash) {
+	var i = Number(window.location.hash.substring(1));
+	if (!_.isNaN(i)) {
+		startIndex = i;
+	}
+}
+
+
+function loadItems(start, end, setFunc){
+	// simulate an async load.  Make your AJAX call(s) here.
+	//
+	_.defer(function(){
+
+		for (var i = start; i <= end; i++) {
+			var index = i;
+			// setFunc is our callback to tell JSqroll what to use for the data.
+			//
+			setFunc(index, window._data[index]);
+			
+		}
+	});
+}
+
+// set options.
+var options = {
+	// set the template for the container element
+	containerTemplateSelector: '#item_container_template',
+
+	// a selector that will select an item in the container element.
+	// item content will be parented into here.
+	contentParentSelector: '.content-parent',
+	
+	// set the template for the element itself.  This will
+	// be instantiated and parented under the container's 
+	// contentParentSector.  
+	// In other words $(contentParentSelector, container).html(itemHtml);
+	itemTemplateSelector: '#item_template',
+
+	// The total number of item containers to create.
+	itemCount: _data.length,
+
+	// The load callback.  This sig should be 
+	// 		function loadCallback(startIndex, endIndex, setFunc)
+	// Where setFunc is called with the data for each index item.  The value passed to setFunc
+	// will be used in template instantiation
+	loadCallback: loadItems,
+
+	// The initial position
+	//
+	position: startIndex
+}
+
+// create and bind to the position_changed event.
+$('.scroller').jSqroll(options).bind('position_changed', function(e, index) {
+	window.location.hash = index;
+});
+				</pre>
+			</code>
+
+		</div>
+	</div>
+</div>
+</body>
+</html>
