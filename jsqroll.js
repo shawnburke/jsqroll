@@ -6,32 +6,63 @@
 
 			
 
-			function ensureContainers(count) {
-				var children = this.scrollParent.children();
+			function ensureContainers(count, enforce) {
+				var children = this.itemParent.children();
 
 				for (var i = 0; i < count ;i++) {
 					var c = children[i];
 
 					if (!c) {
 						var c = $(this.containerTemplate({index:i}));
-						this.scrollParent.append(c);
+						this.itemParent.append(c);
+					}
+				}
+
+				if (enforce) {
+					for (var i = count; i < children.length; i++) {
+						var c = children[i];
+						if (c) {
+							$(c).remove();
+						}
 					}
 				}
 			}
 
+			function getHeight(el) {
+				if (el[0] == window) {
+					return window.innerHeight || document.documentElement.clientHeight;
+				}
+				else {
+					return el.height();
+				}
+			}
+
 			function computeVisibleItems() {
-				var top = this.scrollParent.scrollTop();
 
-				var item = this.scrollParent.children().first();
+				var viewTop = this.scrollParent.scrollTop();
+				//var topOffset = 0;
+
+				var viewHeight = getHeight(this.scrollParent);
 
 
-				var w = Math.floor(this.scrollParent.width() / item.outerWidth());
-				var start = Math.floor(top / item.outerHeight()) * w;
+				if (this.itemParent[0] != (this.scrollParent && this.scrollParent[0])) {
+					viewTop -= this.itemParent.position().top;
+				}
 
-				var end = (w * Math.ceil((top + this.scrollParent.height()) / item.outerHeight())) -1;
+			
+				var item = this.itemParent.children().first();
+
+
+				var w = Math.floor(this.itemParent.width() / item.outerWidth());
+
+				var start = Math.floor(viewTop / item.outerHeight()) * w;
+
+				var bottom = viewTop + viewHeight;
+
+				var end = (w * Math.ceil(bottom / item.outerHeight())) -1;
 
 				return {
-					start: start,
+					start: Math.max(0,start),
 					end: Math.min(end, this.options.itemCount - 1)
 				}
 
@@ -45,8 +76,11 @@
 					
 					// get the parent.
 					//
-					var p = $('.content-parent', this.scrollParent)[index];
+					var p = $(this.options.contentParentSelector, this.itemParent)[index];
 
+					if (_.isUndefined(value.index)) {
+						value.index = index;
+					}
 					var html = this.itemTemplate(value);
 					$(p).html(html);
 					
@@ -67,26 +101,26 @@
 						firstUnloaded = i;
 					}
 					this.loaded[i] = 0;
+
 				}
 				if (firstUnloaded >= 0) {
+					console.log("Loading " + start + '->' + end);
 					this.options.loadCallback && this.options.loadCallback(firstUnloaded, end, this.setItem.bind(this));
 				}
 				
 			}
 
 			function onIndexChanged(index) {
-				if (this.options.positionChanged) {
-					this.options.positionChanged(index);
-				}
+				this.jqThis.trigger('position_changed', index);
 			}
 
 			function onScroll() {
 
 				var items = this.computeVisibleItems();
 
-				/*var bottom = scrollParent.innerHeight() + scrollParent.scrollTop()
+				/*var bottom = itemParent.innerHeight() + itemParent.scrollTop()
 
-				if (scrollParent.scrollTop() + scrollParent.innerHeight() >= bottom) {
+				if (itemParent.scrollTop() + itemParent.innerHeight() >= bottom) {
 					
 					var os = options.onOverscroll(items.end);
 					if (os) {
@@ -95,7 +129,7 @@
 					}
 				}*/
 		
-			
+				
 				this.onIndexChanged(items.start);
 
 				this.ensureContainers(items.end);
@@ -104,12 +138,12 @@
 			}
 
 			function scrollToIndex(index) {
-				var item = this.scrollParent.children().first();
+				var item = this.itemParent.children().first();
 
-				var w = Math.floor(this.scrollParent.width() / item.outerWidth());
+				var w = Math.floor(this.itemParent.width() / item.outerWidth());
 				
 				var top = (index / w) * item.outerHeight();
-				this.scrollParent.scrollTop(top);
+				this.itemParent.scrollTop(top);
 			}
 
 
@@ -126,14 +160,17 @@
 					 		if (!data) {
 
 					 			data = {
+					 				jqThis : $this,
 					 				options: $.extend({
 												position: 0,
 												itemCount: 0,
-												loadDelay: 200
+												loadDelay: 200,
+												contentParentSelector: '.content-parent'
 											}, opts),
-					 				scrollParent: $this,
+					 				itemParent: $this,
+					 				scrollParent: $(opts.scrollSourceSelector || $this),
+					 				isPage: opts.scrollSourceSelector == window,
 					 				loaded: {}
-					 				
 					 			};
 
 					 			data.scrollToIndex = scrollToIndex.bind(data);
@@ -165,6 +202,17 @@
 					 		}
 							
 						});
+				},
+				itemCount: function(newCount) {
+					var data = $(this).data('state');
+					if (!data) return 0;
+					if (_.isUndefined(newCount)) {
+						return data.options.itemCount;
+					}
+					else {
+						data.options.itemCount = newCount;
+						data.ensureContainers(newCount, true);
+					}
 				}
 			}
 
