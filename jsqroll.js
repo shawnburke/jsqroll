@@ -1,3 +1,28 @@
+
+if (!Function.prototype.bind) {
+  Function.prototype.bind = function (oThis) {
+    if (typeof this !== "function") {
+      // closest thing possible to the ECMAScript 5 internal IsCallable function
+      throw new TypeError("Function.prototype.bind - what is trying to be bound is not callable");
+    }
+ 
+    var aArgs = Array.prototype.slice.call(arguments, 1), 
+        fToBind = this, 
+        fNOP = function () {},
+        fBound = function () {
+          return fToBind.apply(this instanceof fNOP && oThis
+                                 ? this
+                                 : oThis,
+                               aArgs.concat(Array.prototype.slice.call(arguments)));
+        };
+ 
+    fNOP.prototype = this.prototype;
+    fBound.prototype = new fNOP();
+ 
+    return fBound;
+  };
+}
+
 	(function( $ ) {
 
 
@@ -60,7 +85,6 @@
 				var bottom = viewTop + viewHeight;
 
 				var end = (w * Math.ceil(bottom / item.outerHeight())) -1;
-
 				return {
 					start: Math.max(0,start),
 					end: Math.min(end, this.options.itemCount - 1)
@@ -143,7 +167,13 @@
 				var w = Math.floor(this.itemParent.width() / item.outerWidth());
 				
 				var top = (index / w) * item.outerHeight();
+
+				if (this.itemParent[0] != (this.scrollParent && this.scrollParent[0])) {
+					top += this.itemParent.position().top;
+				}
+
 				this.scrollParent.scrollTop(top);
+
 			}
 
 
@@ -160,6 +190,7 @@
 					 		if (!data) {
 
 					 			data = {
+
 					 				jqThis : $this,
 					 				options: $.extend({
 												position: 0,
@@ -174,12 +205,17 @@
 					 			};
 
 					 			data.scrollToIndex = scrollToIndex.bind(data);
+
 					 			data.onScroll = onScroll.bind(data);
+
 					 			data.loadItems = loadItems.bind(data);
 								data.setItem = setItem.bind(data);
+									
+
 								data.computeVisibleItems = computeVisibleItems.bind(data);
 								data.ensureContainers = ensureContainers.bind(data);
 								data.onIndexChanged= onIndexChanged.bind(data);
+							
 
 					 			data.containerTemplate = _.template($(data.options.containerTemplateSelector).html());
 								data.itemTemplate = _.template($(data.options.itemTemplateSelector).html());
@@ -191,13 +227,16 @@
 								var firstContainer = $(data.containerTemplate({index:0}));
 								$this.append(firstContainer);
 								data.ensureContainers(data.options.itemCount);
-
+								data.scrollFunc = _.debounce(data.onScroll, data.options.loadDelay);
+								data.scrollParent.scroll(data.scrollFunc);
+								
 								if (data.options.position) {
 									data.scrollToIndex(data.options.position);
 								}
-								data.scrollFunc = _.debounce(data.onScroll, data.options.loadDelay);
-								data.scrollParent.scroll(data.scrollFunc);
-								data.onScroll();
+								else {
+									data.onScroll();
+								}
+								
 
 								$(window).resize(data.onScroll);
 					 		}
