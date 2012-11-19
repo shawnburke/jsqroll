@@ -1,16 +1,23 @@
-
 #Description
 
 JSqroll is a flexible scrolling helper that allows for efficient and pagable scrolling through lots of data.  It supports AJAX in a natural way.
 
+The main thing to know about JSqroll is that it works with placeholder items rather than always dynamically loading things.  If you have data sets of less than a few items, the user gets a similar experience, but one that is more natural with how browsers like to scroll.
+
+What JSqroll does is track which items are visible on the screen, then issues load callbacks for just those items.  When the user scrolls, they'll see placeholder items (these can look any way you'd like).  Once they stop scrolling for a period (default, 200ms), the load callback is invoked and the placeholders will be replaced with content you supply.
+
+See a live demo [here](http://shawnburke.github.com/jsqroll/demo_el.html).
+
 JSqroll depends on JQuery for DOM operations and [Underscore](http://underscorejs.org) for templates.
 
-JScroll currently supports:
+JSqroll currently supports:
 			
 * Incremental loading of element content
 * Easy integration with AJAX-sourced data
 * Element- or page-level scrolling
 * Template-based element definitions
+
+With a bit more work, JSqroll would be able to also support the infinite scroll scenario once the pre-provisioned number of items is scrolled through.  Perhaps a forker can do this.
 
 #Docs
 			
